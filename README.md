@@ -45,19 +45,17 @@ A rating calcuator for osu!mania 6K mode.
 
 Rating计算：使用sunnyxxy osu!主页展示的[google表格](https://docs.google.com/spreadsheets/d/1orVFRc_dmCDaQaIEGi1vcjePcZ0od0qMriuUNJOQUO0/edit?pli=1&gid=777965813#gid=777965813)中的公式：
 
-$$\text{Params: } \text{diff}'=\max(\text{diff\_const}-3,0)$$
+$$\text{Params: } \text{diff}'=\max(\text{diffConst}-3,0)$$
 
-$$
-\text{rating}=f(\text{acc}, \text{diff\_const})=
-\begin{cases}
-    0,~&0\leq\text{acc}\leq 80;\\
-    \frac{\text{acc}-80}{13},~&80<\text{acc}\leq93;\\
-    \frac{(\text{diff\_const}-\text{diff}')(\text{acc}-93)}{3}+\text{diff}',~&93<\text{acc}\leq96;\\
-    \frac{3(\text{acc-96})}{6-(\text{acc-96})}+\text{diff\_const},~&96<\text{acc}\leq98;\\
-    \frac{8(\text{acc-98})}{9-2(\text{acc-98})}+\text{diff\_const}+1.5,~&98<\text{acc}\leq99.5;\\
-    \frac{4(\text{acc-99.5})}{3-2(\text{acc-99.5})}+\text{diff\_const}+3.5,~&99.5<\text{acc}\leq100.
-\end{cases}
-$$
+$$\begin{equation}\text{rating}=f(\text{acc}, \text{diffConst})=\begin{cases}
+0,~&0\leq\text{acc}\leq 80;\\
+\frac{\text{acc}-80}{13},~&80<\text{acc}\leq93;\\
+\frac{(\text{diffConst}-\text{diff}')(\text{acc}-93)}{3}+\text{diff}',~&93<\text{acc}\leq96;\\
+\frac{3(\text{acc-96})}{6-(\text{acc-96})}+\text{diffConst},~&96<\text{acc}\leq98;\\
+\frac{8(\text{acc-98})}{9-2(\text{acc-98})}+\text{diffConst}+1.5,~&98<\text{acc}\leq99.5;\\
+\frac{4(\text{acc-99.5})}{3-2(\text{acc-99.5})}+\text{diffConst}+3.5,~&99.5<\text{acc}\leq100.
+\end{cases}\end{equation}$$
+
 简易速查：
 |accuracy|rating|
 |---|---|
