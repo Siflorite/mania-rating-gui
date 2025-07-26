@@ -1,4 +1,4 @@
-name: Rust
+name: Rust Build and Package
 
 on:
   push:
@@ -11,10 +11,28 @@ env:
 
 jobs:
   build:
-
+    name: Build for Windows
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v4
     - name: Build
-      run: cargo build --release
+      run: cargo build --verbose --release
+    
+    - name: Create release directory
+      run: mkdir release
+
+    - name: Copy executable to release directory
+      run: copy target\release\mania-rating-gui.exe release\
+      # 将 your_project_name.exe 替换为你的实际可执行文件名
+      
+    - name: Copy resources to release directory
+      run: |
+        xcopy /s /y fonts release\fonts
+        xcopy /s /y svg release\svg
+        
+    - name: Zip release folder
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -r release.zip release
+        # 或者使用 7z 替代 zip 以获得更好的压缩率
