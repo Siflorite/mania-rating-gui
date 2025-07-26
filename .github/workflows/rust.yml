@@ -21,31 +21,34 @@ jobs:
     - name: Build
       run: cargo build --verbose --release
     
-    - name: Create release directory
-      run: mkdir release
+    # - name: Create release directory
+    #   run: mkdir release
 
-    - name: Copy executable to release directory
-      run: copy target\release\mania-rating-gui.exe release\
-      # 将 your_project_name.exe 替换为你的实际可执行文件名
+    # - name: Copy executable to release directory
+    #   run: copy target\release\mania-rating-gui.exe release\
+    #   # 将 your_project_name.exe 替换为你的实际可执行文件名
       
-    - name: Copy resources to release directory
-      run: |
-        cmd /c "robocopy fonts release\fonts /E & exit 0"
-        cmd /c "robocopy svg release\svg /E & exit 0"
+    # - name: Copy resources to release directory
+    #   run: |
+    #     cmd /c "robocopy fonts release\fonts /E & exit 0"
+    #     cmd /c "robocopy svg release\svg /E & exit 0"
         
-    - name: Zip release folder
-      uses: thedoctor0/zip-release@0.7.5
-      with:
-        type: 'zip'
-        filename: 'release.zip'
-        path: 'release'
-        # 或者使用 7z 替代 zip 以获得更好的压缩率
+    # - name: Zip release folder
+    #   uses: thedoctor0/zip-release@0.7.5
+    #   with:
+    #     type: 'zip'
+    #     filename: 'release.zip'
+    #     path: 'release'
+    #     # 或者使用 7z 替代 zip 以获得更好的压缩率
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: release-package
-        path: release.zip
+        path: |
+          target\release\mania-rating-gui.exe
+          fonts/
+          svg/
         
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
+    # - name: Create Release
+    #   uses: softprops/action-gh-release@v2
