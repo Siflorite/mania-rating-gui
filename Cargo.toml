@@ -1,0 +1,23 @@
+[package]
+name = "mania-rating-gui"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+chrono = "*"
+mania-converter = { path = "F:/6K/converter-0.6-beta" }
+osu-db = { git = "https://github.com/Siflorite/osu-db.git" }
+rayon = "1.10"
+slint = "1.12.1"
+tokio = { version = "1", features = ["full"] }
+winreg = "0.55"
+# For picture generation
+handlebars = "6.3"
+resvg = "0.45"
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+base64 = "0.22.1"
+
+[build-dependencies]
+slint-build = "1.12.1"

@@ -1,0 +1,165 @@
+import { ComboBox, VerticalBox, ScrollView, HorizontalBox, Button } from "std-widgets.slint";
+
+global Preludes {
+    out property <image> placeholder: @image-url("../svg/no_image.jpg");
+}
+
+export struct ScoreTileData {
+    image: image,
+    index: int,
+}
+
+component ScoreTile inherits Image {
+    in property <image> image: Preludes.placeholder;
+    in property <int> id: 0;
+    in-out property <bool> available: true;
+
+    callback added(int);
+    callback removed(int);
+
+    width: 600px;
+    height: 175px;
+    source: root.image;
+    image-fit: contain;
+
+    if !available: Rectangle {
+        x: 575px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #08b508 0%, #0b9804 100%);
+        Rectangle {
+            width: 12px;
+            height: 3px;
+            background: white;
+        }
+        Rectangle {
+            width: 3px;
+            height: 12px;
+            background: white;
+        }
+        TouchArea {
+            clicked => {
+                debug("Added on index: " + root.id);
+                root.added(root.id);
+            }
+        }
+    }
+
+    if available: Rectangle {
+        x: 575px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #ff0000 0%, #bb0d0d 100%);
+        Rectangle {
+            width: 12px;
+            height: 3px;
+            background: white;
+        }
+        TouchArea {
+            clicked => {
+                debug("Removed on index: " + root.id);
+                root.removed(root.id);
+            }
+        }
+    }
+
+}
+
+export component MainWindow inherits Window {
+    // Original card: 1200 * 350 -> 600 * 175 (0.5x)
+    width: 1850px;
+    height: 800px; 
+    title: "Mania Rating Viewer";
+
+    in-out property <[ScoreTileData]> score-tiles;
+    in-out property <[ScoreTileData]> removed-tiles: [];
+    in-out property <[string]> player-names: ["Recent 30"];
+    in-out property <string> current-player-name: "Recent 30";
+    in-out property <string> text-content: "";
+
+    callback selection_changed(string);
+    callback reset-tiles();
+    callback export();
+    callback added(int);
+    callback removed(int);
+
+    VerticalBox {
+        HorizontalLayout {
+            spacing: 10px;
+            ComboBox {
+                width: 300px;
+                height: 40px;
+                current-value: "Recent 30";
+                model <=> player-names;
+                selected(current-value) => {
+                    if current-value != root.current-player-name {
+                        root.selection_changed(current-value);
+                        root.current-player-name = current-value;
+                    }
+                }
+            }
+
+            Button {
+                width: 100px;
+                text: "重置";
+                clicked => {
+                    reset-tiles();
+                }
+            }
+
+            Button {
+                width: 100px;
+                text: "导出";
+                clicked => {
+                    export();
+                }
+            }
+
+            Text {
+                y: 8px;
+                font-size: 18px;
+                text: root.text-content;
+            }
+        }
+    
+        ScrollView {
+            width: 1840px;
+            viewport-width: 1820px; // 3 * 600 + 2 * 10 padding
+            viewport-height: (root.removed-tiles.length > 0) ? Math.ceil(score-tiles.length / 3) * 185px + 50px + Math.ceil(removed-tiles.length / 3) * 185px : Math.ceil(score-tiles.length / 3) * 185px; // 10 * 175 + 9 * 10 padding + ComboBox
+
+            for tile[i] in score-tiles : ScoreTile {
+                id: tile.index;
+                source: root.score-tiles[i].image;
+                available: true;
+                x: Math.mod(i, 3) * 610px; 
+                y: Math.floor(i / 3) * 185px;
+                removed(idx) => {
+                    root.removed(idx);
+                }
+            }
+
+            property <length> prev-height: Math.ceil(score-tiles.length / 3) * 185px;
+            if root.removed-tiles.length > 0 : Text {
+                x: 10px;
+                y: prev-height;
+                text: "Removed";
+                font-size: 28px;
+            }
+
+            for tile[i] in removed-tiles : ScoreTile {
+                id: tile.index;
+                source: root.removed-tiles[i].image;
+                available: false;
+                x: Math.mod(i, 3) * 610px; 
+                y: prev-height + 50px + Math.floor(i / 3) * 185px;
+                added(idx) => {
+                    root.added(idx);
+                }
+            }
+        }
+    }
+}
