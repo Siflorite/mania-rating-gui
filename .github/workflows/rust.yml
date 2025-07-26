@@ -28,11 +28,13 @@ jobs:
       
     - name: Copy resources to release directory
       run: |
-        xcopy /s /y fonts release\fonts
-        xcopy /s /y svg release\svg
+        robocopy fonts release\fonts /E
+        robocopy svg release\svg /E
         
     - name: Zip release folder
-      uses: montudor/action-zip@v1
+      uses: thedoctor0/zip-release@0.7.5
       with:
-        args: zip -r release.zip release
+        type: 'zip'
+        filename: 'release.zip'
+        path: 'release'
         # 或者使用 7z 替代 zip 以获得更好的压缩率
