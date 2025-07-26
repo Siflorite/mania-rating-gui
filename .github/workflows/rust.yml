@@ -2,6 +2,8 @@ name: Rust Build and Package
 
 on:
   push:
+    tags:
+      - 'v*'  # 当推送v开头的标签时触发发布
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
@@ -16,14 +18,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    # - name: Build
-    #   run: cargo build --verbose --release
+    - name: Build
+      run: cargo build --verbose --release
     
     - name: Create release directory
       run: mkdir release
 
-    # - name: Copy executable to release directory
-    #   run: copy target\release\mania-rating-gui.exe release\
+    - name: Copy executable to release directory
+      run: copy target\release\mania-rating-gui.exe release\
       # 将 your_project_name.exe 替换为你的实际可执行文件名
       
     - name: Copy resources to release directory
@@ -38,3 +40,12 @@ jobs:
         filename: 'release.zip'
         path: 'release'
         # 或者使用 7z 替代 zip 以获得更好的压缩率
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-package
+        path: release.zip
+        
+    - name: Create Release
+      uses: softprops/softprops/action-gh-release@v2
