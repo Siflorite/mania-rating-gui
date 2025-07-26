@@ -1,0 +1,54 @@
+name: Rust Build and Package
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build for Windows
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+        target: x86_64-pc-windows-msvc  # Windows 目标平台
+
+    - name: Build release
+      run: cargo build --release
+      
+    - name: Create release directory
+      run: mkdir release
+      
+    - name: Copy executable to release directory
+      run: copy target\release\mania-rating-gui.exe release\
+      # 将 your_project_name.exe 替换为你的实际可执行文件名
+      
+    - name: Copy resources to release directory
+      run: |
+        xcopy /s /y fonts release\fonts
+        xcopy /s /y svg release\svg
+        
+    - name: Zip release folder
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -r release.zip release
+        # 或者使用 7z 替代 zip 以获得更好的压缩率
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ReleasePackage
+        path: release.zip
