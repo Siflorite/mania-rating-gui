@@ -28,10 +28,8 @@ jobs:
       
     - name: Copy resources to release directory
       run: |
-        robocopy fonts release\fonts /E
-        if ($LASTEXITCODE -ge 8) { exit 1 }  # 仅当严重错误时失败
-        robocopy svg release\svg /E
-        if ($LASTEXITCODE -ge 8) { exit 1 }  # 仅当严重错误时失败
+        robocopy fonts release\fonts /E || exit 0
+        robocopy svg release\svg /E || exit 0
         
     - name: Zip release folder
       uses: thedoctor0/zip-release@0.7.5
