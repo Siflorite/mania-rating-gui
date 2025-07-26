@@ -22,8 +22,8 @@ jobs:
     - name: Create release directory
       run: mkdir release
 
-    - name: Copy executable to release directory
-      run: copy target\release\mania-rating-gui.exe release\
+    # - name: Copy executable to release directory
+    #   run: copy target\release\mania-rating-gui.exe release\
       # 将 your_project_name.exe 替换为你的实际可执行文件名
       
     - name: Copy resources to release directory
