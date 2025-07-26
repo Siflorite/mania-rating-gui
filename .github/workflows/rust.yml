@@ -48,4 +48,4 @@ jobs:
         path: release.zip
         
     - name: Create Release
-      uses: softprops/softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v2
