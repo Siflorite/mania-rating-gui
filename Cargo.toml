@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1"
 chrono = "*"
-mania-converter = { path = "F:/6K/converter-0.6-beta" }
+mania-converter = { git = "https://github.com/Siflorite/mania-converter-rust.git" }
 osu-db = { git = "https://github.com/Siflorite/osu-db.git" }
 rayon = "1.10"
 slint = "1.12.1"

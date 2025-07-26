@@ -2878,6 +2878,7 @@ dependencies = [
 [[package]]
 name = "mania-converter"
 version = "0.6.0-b"
+source = "git+https://github.com/Siflorite/mania-converter-rust.git#d7d090beb5d301c16dff5d540ff61151b9710855"
 dependencies = [
  "handlebars",
  "lazy_static",

@@ -47,7 +47,7 @@ Rating计算：使用sunnyxxy osu!主页展示的[google表格](https://docs.goo
 
 $$\text{Params: } \text{diff}'=\max(\text{diffConst}-3,0)$$
 
-$$\begin{equation}\text{rating}=f(\text{acc}, \text{diffConst})=\begin{cases}
+$$\begin{equation}\notag\text{rating}=f(\text{acc}, \text{diffConst})=\begin{cases}
 0,~&0\leq\text{acc}\leq 80;\\
 \frac{\text{acc}-80}{13},~&80<\text{acc}\leq93;\\
 \frac{(\text{diffConst}-\text{diff}')(\text{acc}-93)}{3}+\text{diff}',~&93<\text{acc}\leq96;\\
