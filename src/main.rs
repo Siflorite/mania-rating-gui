@@ -83,6 +83,14 @@ async fn main() -> Result<()> {
         tokio::spawn(export(player_name, rating_export, ui_handle));
     });
 
+    ui.on_show_help_window(move || {
+        let help_window = HelpWindow::new().unwrap();
+        help_window.show().unwrap();
+        help_window.on_open_help_url(move || {
+            open::that("https://github.com/Siflorite/mania-rating-gui").unwrap();
+        });
+    });
+
     ui.run()?;
     Ok(())
 }

@@ -1,16 +1,18 @@
 [package]
 name = "mania-rating-gui"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 [dependencies]
 anyhow = "1"
 chrono = "*"
 mania-converter = { git = "https://github.com/Siflorite/mania-converter-rust.git" }
+open = "5.3.2"
 osu-db = { git = "https://github.com/Siflorite/osu-db.git" }
 rayon = "1.10"
-slint = "1.12.1"
+slint = { version = "1.12.1", features = ["renderer-skia"]}
 tokio = { version = "1", features = ["full"] }
+winres = "0.1.12"
 winreg = "0.55"
 # For picture generation
 handlebars = "6.3"
@@ -21,3 +23,4 @@ base64 = "0.22.1"
 
 [build-dependencies]
 slint-build = "1.12.1"
+winres = "0.1.12"

@@ -74,6 +74,7 @@ export component MainWindow inherits Window {
     width: 1850px;
     height: 800px; 
     title: "Mania Rating Viewer";
+    icon: @image-url("../svg/icon.svg");
 
     in-out property <[ScoreTileData]> score-tiles;
     in-out property <[ScoreTileData]> removed-tiles: [];
@@ -86,6 +87,7 @@ export component MainWindow inherits Window {
     callback export();
     callback added(int);
     callback removed(int);
+    callback show-help-window();
 
     VerticalBox {
         HorizontalLayout {
@@ -116,6 +118,14 @@ export component MainWindow inherits Window {
                 text: "导出";
                 clicked => {
                     export();
+                }
+            }
+
+            Button {
+                width: 100px;
+                text: "使用说明";
+                clicked => {
+                    show-help-window();
                 }
             }
 
@@ -161,5 +171,113 @@ export component MainWindow inherits Window {
                 }
             }
         }
+    }
+}
+
+component ScoreTileExample inherits Image {
+    in property <image> image: @image-url("rating_example.png");
+    in property <int> id: 0;
+    in-out property <bool> available: true;
+
+    function clicked() {
+        available = !available;
+    }
+
+    width: 600px;
+    height: 175px;
+    source: root.image;
+    image-fit: contain;
+
+    if !available: Rectangle {
+        x: 575px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #08b508 0%, #0b9804 100%);
+        Rectangle {
+            width: 12px;
+            height: 3px;
+            background: white;
+        }
+        Rectangle {
+            width: 3px;
+            height: 12px;
+            background: white;
+        }
+        TouchArea {
+            clicked => {
+                root.clicked();
+            }
+        }
+    }
+
+    if available: Rectangle {
+        x: 575px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #ff0000 0%, #bb0d0d 100%);
+        Rectangle {
+            width: 12px;
+            height: 3px;
+            background: white;
+        }
+        TouchArea {
+            clicked => {
+                root.clicked();
+            }
+        }
+    }
+
+}
+
+export component HelpWindow inherits Window {
+    title: "使用说明";
+    width: 800px;
+    height: 600px;
+    icon: @image-url("../svg/icon.svg");
+    callback open-help-url();
+
+    Text {
+        x: 10px;
+        y: 10px;
+        font-size: 20px;
+        width: 780px;
+        height: 500px;
+        wrap: word-wrap;
+        text: "使用方式:\n打开程序后，程序会先从本地osu!目录读取6K游玩记录和谱面信息。加载完成后，通过左上角的下拉框选择玩家，或Recent 30即最近30次游玩记录。点击重置即可重新读取。";
+    }
+
+    Text {
+        x: 10px;
+        y: 90px;
+        font-size: 20px;
+        width: 780px;
+        wrap: word-wrap;
+        text: "之后程序会默认加载对应玩家最多30个最佳6K成绩。由于可能出现重复谱面或不想记录在B30列表中的谱面，可以点击卡片右下角红色减号按钮，将其移动到备选区，如果玩家游玩记录还有剩余就会在B30列表填充剩余的最好成绩。备选区的卡片右下角变成绿色加号按钮，点击即可替代B30列表最差的一个成绩。";
+    }
+
+    Text {
+        x: 10px;
+        y: 190px;
+        font-size: 20px;
+        width: 780px;
+        wrap: word-wrap;
+        text: "筛选完B30列表之后，点击导出按钮即可导出B30图片，导出完毕后程序界面会显示导出图片的路径。\n卡片信息如下：左侧是谱面背景，中间包括谱面的标题、音乐家、创作者、难度名等信息，中间下方是谱面的BPM、时长、难度和物件信息。右侧是游玩记录的排名、判定占比、Rating与定级、Rating Acc等。最下方是谱面的Hash（用于确认唯一性）和谱面ID。详情参见 https://github.com/Siflorite/mania-rating-gui";
+    }
+
+    Button {
+        y: 350px;
+        text: "访问详情页";
+        clicked => {
+           root.open-help-url();
+        }
+    }
+
+    ScoreTileExample {
+        x: 100px;
+        y: 400px;
     }
 }
