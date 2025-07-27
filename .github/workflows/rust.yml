@@ -1,7 +1,9 @@
-name: Rust
+name: Rust Build and Package
 
 on:
   push:
+    tags:
+      - 'v*'  # 当推送v开头的标签时触发发布
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
@@ -11,10 +13,25 @@ env:
 
 jobs:
   build:
-
+    name: Build for Windows
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v4
     - name: Build
-      run: cargo build --release
+      run: cargo build --verbose --release
+    
+    - name: Create release directory
+      run: mkdir release
+
+    - name: Copy executable to main directory
+      run: copy target\release\mania-rating-gui.exe .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-package
+        path: |
+          mania-rating-gui.exe
+          fonts/
+          svg/
