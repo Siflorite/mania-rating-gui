@@ -1,12 +1,18 @@
 # mania-rating-gui
 A rating calcuator for osu!mania 6K mode.
 
+![](svg/icon.svg)
+
 # 使用方法：
 打开程序后，程序会加载一段时间，包括读取本地osu的成绩，并绘制近30次成绩的卡片(Recent 30)。之后程序会显示这样的界面：
 
 ![主界面](/pics/main.jpg "主界面")
 
-窗口的左上角的下拉框包含了所有本地osu!目录内有osu!mania 6K谱面游玩记录的玩家名称，以及Recent 30，通过选择玩家名称即可加载其最佳30个游玩记录(Best 30)并绘制卡片。
+窗口的左上角的下拉框包含了所有本地osu!目录内有osu!mania 6K谱面游玩记录的玩家名称，以及Recent 30，通过选择玩家名称即可加载其最佳30个游玩记录(Best 30)并绘制卡片。卡片的样例如下所示：
+
+![卡片](/ui/rating_example.png "卡片")
+
+单个卡片的大小为1200\*350像素，左边是300\*300的谱面背景，右边的底层图层是背景经过了高斯模糊和暗化处理。在卡片的中间展示了谱面的标题、艺术家、创作者、难度名等基本信息，下方是BPM、时长、经过SR Reborn计算的难度星级、以及单点和长键的物量。在卡片右边是成绩相关信息，包括在游玩记录中的排名，玩家名称与游玩时间，使用的mod（只显示DT, HT, ScoreV2，不计入Random成绩），各个判定的数量，以及谱面的6K定级和游玩Rating。在判定占比圈的下方有两个百分数，绿色的是按照下方Rating算法部分计算的Rating Acc（彩310，黄300），白色的是游戏中实际的Acc。
 
 界面内的成绩卡片会在右下角有红色的"-""按钮或绿色的"+"按钮。在点击红色按钮之后，对应的卡片将会从成绩列表移除，添加到备选列表。如果玩家的成绩还有剩余，如在开始移除一个之后，游玩的记录数>31，那么就会在成绩列表自动填充剩余的最好的成绩。
 
@@ -41,9 +47,11 @@ A rating calcuator for osu!mania 6K mode.
 
 # 使用的算法
 
-[sunnyxxy SR Reborn](https://github.com/sunnyxxy/Star-Rating-Rebirth)：使用2025/04/15版本。
+## [sunnyxxy SR Reborn](https://github.com/sunnyxxy/Star-Rating-Rebirth)
+使用2025/04/15版本。
 
-Rating计算：使用sunnyxxy osu!主页展示的[google表格](https://docs.google.com/spreadsheets/d/1orVFRc_dmCDaQaIEGi1vcjePcZ0od0qMriuUNJOQUO0/edit?pli=1&gid=777965813#gid=777965813)中的公式：
+## Rating计算
+使用sunnyxxy osu!主页展示的[google表格](https://docs.google.com/spreadsheets/d/1orVFRc_dmCDaQaIEGi1vcjePcZ0od0qMriuUNJOQUO0/edit?pli=1&gid=777965813#gid=777965813)中的公式：
 
 $$\text{Params: } \text{diff}'=\max(\text{diffConst}-3,0)$$
 
@@ -103,10 +111,24 @@ fn calc_rating(diff_const: f64, acc: f64) -> f64 {
 }
 ```
 
+## Acc计算
+由于目前的版本对于LN的定级仍然较高，在Acc计算上进行手动进行干预。
+
+$$\text{ratingAcc}=\frac{310\times\text{numMarvelous}+300\times\text{numPerfect}+200\times\text{numGreat}+100\times\text{numGood}+50\times\text{numBad}}{310\times(\text{numMarvelous}+\text{numPerfect}+\text{numGreat}+\text{numGood}+\text{numBad}+\text{numMiss})}\times100\%$$
+
+即osu!mania从高到低的6个判定依次给予310, 300, 200, 100, 50, 0的权重。相较之下，ScoreV2对彩色判定的权重是305，目前的Rank系统对彩色判定的权重是320。而经过计算后发现320权重会导致相同成绩开启ScoreV2模式的Rating更高，且目前Rating计算没有适应新的Acc；而305的权重会导致LN优势过大，因此目前采用310权重。
 
 # TODO List
-+ 内置指南
++ ~~内置指南~~ (0.1.1已加入)
++ 显示加载进度条
 + 导出后自动打开文件夹/图片？
 + 移除卡片可以选择是否自动填充
 + 联网谱面验证、本地回放验证
 + 更美观
+
+
+# Update List
+## v0.1.1
++ 内置了使用说明，便于理解操作，以及打开github主页的按钮
++ 暂时使用skia作为渲染器，生成的exe文件大了约18MB，使文字渲染效果更好（原生太烂了）
++ 加入了程序图标和窗口图标

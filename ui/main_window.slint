@@ -75,6 +75,7 @@ export component MainWindow inherits Window {
     height: 800px; 
     title: "Mania Rating Viewer";
     icon: @image-url("../svg/icon.svg");
+    default-font-family: "Source Han Sans SC";
 
     in-out property <[ScoreTileData]> score-tiles;
     in-out property <[ScoreTileData]> removed-tiles: [];
@@ -243,7 +244,7 @@ export component HelpWindow inherits Window {
     Text {
         x: 10px;
         y: 10px;
-        font-size: 20px;
+        font-size: 18px;
         width: 780px;
         height: 500px;
         wrap: word-wrap;
@@ -253,7 +254,7 @@ export component HelpWindow inherits Window {
     Text {
         x: 10px;
         y: 90px;
-        font-size: 20px;
+        font-size: 18px;
         width: 780px;
         wrap: word-wrap;
         text: "之后程序会默认加载对应玩家最多30个最佳6K成绩。由于可能出现重复谱面或不想记录在B30列表中的谱面，可以点击卡片右下角红色减号按钮，将其移动到备选区，如果玩家游玩记录还有剩余就会在B30列表填充剩余的最好成绩。备选区的卡片右下角变成绿色加号按钮，点击即可替代B30列表最差的一个成绩。";
@@ -262,7 +263,7 @@ export component HelpWindow inherits Window {
     Text {
         x: 10px;
         y: 190px;
-        font-size: 20px;
+        font-size: 18px;
         width: 780px;
         wrap: word-wrap;
         text: "筛选完B30列表之后，点击导出按钮即可导出B30图片，导出完毕后程序界面会显示导出图片的路径。\n卡片信息如下：左侧是谱面背景，中间包括谱面的标题、音乐家、创作者、难度名等信息，中间下方是谱面的BPM、时长、难度和物件信息。右侧是游玩记录的排名、判定占比、Rating与定级、Rating Acc等。最下方是谱面的Hash（用于确认唯一性）和谱面ID。详情参见 https://github.com/Siflorite/mania-rating-gui";
