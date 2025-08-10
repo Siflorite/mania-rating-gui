@@ -26,6 +26,10 @@ A rating calcuator for osu!mania 6K mode.
 
 ![导出图像](/pics/SiFouR.png "导出图像")
 
+在v0.2.0版本添加了复制功能，可以点击卡片左下角的灰色按钮，将单个卡片复制到剪切板，从而可以直接在QQ等聊天软件内粘贴发送。此外还增加了实验性的实时读取功能，在启动本程序打开实时读取模式后，开启osu!游戏，程序就会通过读取osu!内存自动读取并展示游玩后的成绩。
+
+![实时模式](/pics/realtime.jpg "实时模式")
+
 # 免责声明
 
 1. 本程序对osu!stable安装目录下的 osu!.db 和 scores.db 进行分析，
@@ -44,6 +48,10 @@ A rating calcuator for osu!mania 6K mode.
     本程序只读取本地数据库，不会修改任何数据库内容。
     由于osu!.db内部格式经常修改，本程序适配版本为20250401版本的数据库，
     后续可能因版本变化导致无法运行。
+
+4. 实时模式需要读取osu!.exe进程的内存，目前只提供了对stable客户端的支持。
+    读取进程内存可能会被杀毒软件拦截，或面临被osu官方服务器或私服封禁的风险。
+    本程序在运行过程中不会修改其他进程的内容，但仍建议谨慎使用。
 
 # 使用的算法
 
@@ -114,7 +122,7 @@ fn calc_rating(diff_const: f64, acc: f64) -> f64 {
 ## Acc计算
 由于目前的版本对于LN的定级仍然较高，在Acc计算上进行手动进行干预。
 
-$$\text{ratingAcc}=\frac{310\times\text{numMarvelous}+300\times\text{numPerfect}+200\times\text{numGreat}+100\times\text{numGood}+50\times\text{numBad}}{310\times(\text{numMarvelous}+\text{numPerfect}+\text{numGreat}+\text{numGood}+\text{numBad}+\text{numMiss})}\times100\%$$
+$$\text{ratingAcc}=\frac{310\times\text{numMarvelous}+300\times\text{numPerfect}+200\times\text{numGreat}+100\times\text{numGood}+50\times\text{numBad}}{310\times(\text{numMarvelous}+\text{numPerfect}+\text{numGreat}+\text{numGood}+\text{numBad}+\text{numMiss})}\times100 \%$$
 
 即osu!mania从高到低的6个判定依次给予310, 300, 200, 100, 50, 0的权重。相较之下，ScoreV2对彩色判定的权重是305，目前的Rank系统对彩色判定的权重是320。而经过计算后发现320权重会导致相同成绩开启ScoreV2模式的Rating更高，且目前Rating计算没有适应新的Acc；而305的权重会导致LN优势过大，因此目前采用310权重。
 
@@ -124,6 +132,8 @@ $$\text{ratingAcc}=\frac{310\times\text{numMarvelous}+300\times\text{numPerfect}
 + ~~导出后自动打开文件夹/图片？~~ (0.2.0已加入打开图片)
 + 移除卡片可以选择是否自动填充
 + 联网谱面验证、本地回放验证
++ 对HR, EZ等mod的支持
++ 可扩展的窗口大小
 + 更美观
 
 
