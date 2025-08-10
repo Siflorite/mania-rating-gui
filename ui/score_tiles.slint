@@ -1,0 +1,185 @@
+global Preludes {
+    out property <image> placeholder: @image-url("../svg/no_image.jpg");
+}
+export component ScoreTile inherits Image {
+    in property <image> image: Preludes.placeholder;
+    in property <int> id: 0;
+    in-out property <bool> available: true;
+
+    callback added(int);
+    callback removed(int);
+    callback copied(image);
+
+    width: 600px;
+    height: 175px;
+    source: root.image;
+    image-fit: contain;
+
+    if !available: Rectangle {
+        x: 575px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #08b508 0%, #0b9804 100%);
+        Rectangle {
+            width: 12px;
+            height: 3px;
+            background: white;
+        }
+        Rectangle {
+            width: 3px;
+            height: 12px;
+            background: white;
+        }
+        TouchArea {
+            clicked => {
+                debug("Added on index: " + root.id);
+                root.added(root.id);
+            }
+        }
+    }
+
+    if available: Rectangle {
+        x: 575px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #ff0000 0%, #bb0d0d 100%);
+        Rectangle {
+            width: 12px;
+            height: 3px;
+            background: white;
+        }
+        TouchArea {
+            clicked => {
+                debug("Removed on index: " + root.id);
+                root.removed(root.id);
+            }
+        }
+    }
+
+    Rectangle {
+        x: 0px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #8f8f8f 0%, #555555 100%);
+        Rectangle {
+            x: 5px;
+            y: 9px;
+            width: 10px;
+            height: 12px;
+            border-color: white;
+            border-width: 2px;
+            background: transparent;
+        }
+        Rectangle {
+            x: 9px;
+            y: 5px;
+            width: 10px;
+            height: 12px;
+            border-color: white;
+            border-width: 2px;
+            background: transparent;
+        }
+        TouchArea {
+            clicked => {
+                root.copied(root.source);
+            }
+        }
+    }
+}
+
+export component ScoreTileExample inherits Image {
+    in property <image> image: @image-url("rating_example.png");
+    in property <int> id: 0;
+    in-out property <bool> available: true;
+
+    function clicked() {
+        available = !available;
+    }
+
+    width: 600px;
+    height: 175px;
+    source: root.image;
+    image-fit: contain;
+
+    if !available: Rectangle {
+        x: 575px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #08b508 0%, #0b9804 100%);
+        Rectangle {
+            width: 12px;
+            height: 3px;
+            background: white;
+        }
+        Rectangle {
+            width: 3px;
+            height: 12px;
+            background: white;
+        }
+        TouchArea {
+            clicked => {
+                root.clicked();
+            }
+        }
+    }
+
+    if available: Rectangle {
+        x: 575px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #ff0000 0%, #bb0d0d 100%);
+        Rectangle {
+            width: 12px;
+            height: 3px;
+            background: white;
+        }
+        TouchArea {
+            clicked => {
+                root.clicked();
+            }
+        }
+    }
+
+    Rectangle {
+        x: 0px;
+        y: 150px;
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        background: @radial-gradient(circle, #8f8f8f 0%, #555555 100%);
+        Rectangle {
+            x: 5px;
+            y: 9px;
+            width: 10px;
+            height: 12px;
+            border-color: white;
+            border-width: 2px;
+            background: transparent;
+        }
+        Rectangle {
+            x: 9px;
+            y: 5px;
+            width: 10px;
+            height: 12px;
+            border-color: white;
+            border-width: 2px;
+            background: transparent;
+        }
+        TouchArea {
+            clicked => {
+                
+            }
+        }
+    }
+
+}

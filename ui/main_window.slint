@@ -1,72 +1,10 @@
-import { ComboBox, VerticalBox, ScrollView, HorizontalBox, Button } from "std-widgets.slint";
-
-global Preludes {
-    out property <image> placeholder: @image-url("../svg/no_image.jpg");
-}
+import { ComboBox, VerticalBox, ScrollView, HorizontalBox, Button, Switch } from "std-widgets.slint";
+import { ScoreTile } from "score_tiles.slint";
+import { HelpWindow } from "help_window.slint";
 
 export struct ScoreTileData {
     image: image,
     index: int,
-}
-
-component ScoreTile inherits Image {
-    in property <image> image: Preludes.placeholder;
-    in property <int> id: 0;
-    in-out property <bool> available: true;
-
-    callback added(int);
-    callback removed(int);
-
-    width: 600px;
-    height: 175px;
-    source: root.image;
-    image-fit: contain;
-
-    if !available: Rectangle {
-        x: 575px;
-        y: 150px;
-        width: 25px;
-        height: 25px;
-        border-radius: 12.5px;
-        background: @radial-gradient(circle, #08b508 0%, #0b9804 100%);
-        Rectangle {
-            width: 12px;
-            height: 3px;
-            background: white;
-        }
-        Rectangle {
-            width: 3px;
-            height: 12px;
-            background: white;
-        }
-        TouchArea {
-            clicked => {
-                debug("Added on index: " + root.id);
-                root.added(root.id);
-            }
-        }
-    }
-
-    if available: Rectangle {
-        x: 575px;
-        y: 150px;
-        width: 25px;
-        height: 25px;
-        border-radius: 12.5px;
-        background: @radial-gradient(circle, #ff0000 0%, #bb0d0d 100%);
-        Rectangle {
-            width: 12px;
-            height: 3px;
-            background: white;
-        }
-        TouchArea {
-            clicked => {
-                debug("Removed on index: " + root.id);
-                root.removed(root.id);
-            }
-        }
-    }
-
 }
 
 export component MainWindow inherits Window {
@@ -79,206 +17,183 @@ export component MainWindow inherits Window {
 
     in-out property <[ScoreTileData]> score-tiles;
     in-out property <[ScoreTileData]> removed-tiles: [];
-    in-out property <[string]> player-names: ["Recent 30"];
-    in-out property <string> current-player-name: "Recent 30";
+    in-out property <[ScoreTileData]> realtime-tiles: [];
+    in-out property <[string]> player-names: ["[Recent 30]"];
+    in-out property <string> current-player-name: "[Recent 30]";
     in-out property <string> text-content: "";
+    in-out property <string> test-content: "This is a test message.";
+
+    in-out property <bool> export-enable: true;
+    in-out property <bool> is-real-time: false;
 
     callback selection_changed(string);
     callback reset-tiles();
     callback export();
     callback added(int);
     callback removed(int);
+    callback copied(image);
     callback show-help-window();
 
-    VerticalBox {
-        HorizontalLayout {
-            spacing: 10px;
-            ComboBox {
-                width: 300px;
-                height: 40px;
-                current-value: "Recent 30";
-                model <=> player-names;
-                selected(current-value) => {
-                    if current-value != root.current-player-name {
-                        root.selection_changed(current-value);
-                        root.current-player-name = current-value;
-                    }
+    callback on-close-requested();
+
+    HorizontalLayout {
+        x: 10px;
+        y: 10px;
+        spacing: 10px;
+        ComboBox {
+            width: 300px;
+            height: 40px;
+            current-value: "[Recent 30]";
+            model <=> player-names;
+            enabled: !root.is-real-time;
+            selected(current-value) => {
+                if current-value != root.current-player-name {
+                    root.export-enable = false;
+                    root.selection_changed(current-value);
+                    root.current-player-name = current-value;
                 }
             }
+        }
 
-            Button {
-                width: 100px;
-                text: "重置";
-                clicked => {
-                    reset-tiles();
-                }
+        Button {
+            width: 100px;
+            height: 40px;
+            text: "重置";
+            enabled: !root.is-real-time;
+            clicked => {
+                root.export-enable = false;
+                reset-tiles();
             }
+        }
 
-            Button {
-                width: 100px;
-                text: "导出";
-                clicked => {
-                    export();
-                }
+        Button {
+            width: 100px;
+            height: 40px;
+            text: "导出";
+            enabled: root.export-enable && !root.is-real-time;
+            clicked => {
+                root.export-enable = false;
+                export();
             }
+        }
 
-            Button {
-                width: 100px;
-                text: "使用说明";
-                clicked => {
-                    show-help-window();
-                }
+        Switch {
+            width: 160px;
+            height: 40px;
+            checked <=> root.is-real-time;
+            text: "实时模式 (测试版)";
+            toggled => {
+
             }
+        }
 
-            Text {
-                y: 8px;
-                font-size: 18px;
-                text: root.text-content;
+        Button {
+            width: 100px;
+            height: 40px;
+            text: "使用说明";
+            clicked => {
+                show-help-window();
+            }
+        }
+
+        Text {
+            y: 8px;
+            height: 40px;
+            font-size: 18px;
+            text: root.text-content;
+        }
+        
+    }
+
+    ScrollView {
+        visible: !root.is-real-time;
+        y: 60px;
+        width: 1840px;
+        height: 740px;
+        viewport-width: 1820px; // 3 * 600 + 2 * 10 padding
+        viewport-height: (root.removed-tiles.length > 0) ? Math.ceil(score-tiles.length / 3) * 185px + 50px + Math.ceil(removed-tiles.length / 3) * 185px : Math.ceil(score-tiles.length / 3) * 185px; // 10 * 175 + 9 * 10 padding + ComboBox
+    
+        for tile[i] in score-tiles : ScoreTile {
+            id: tile.index;
+            source: root.score-tiles[i].image;
+            available: true;
+            x: Math.mod(i, 3) * 610px; 
+            y: Math.floor(i / 3) * 185px;
+            removed(idx) => {
+                root.export-enable = false;
+                root.removed(idx);
+            }
+            copied(image) => {
+                root.copied(image);
+                root.text-content = "#\{self.id+1}卡片已复制到剪贴板";
             }
         }
     
-        ScrollView {
-            width: 1840px;
-            viewport-width: 1820px; // 3 * 600 + 2 * 10 padding
-            viewport-height: (root.removed-tiles.length > 0) ? Math.ceil(score-tiles.length / 3) * 185px + 50px + Math.ceil(removed-tiles.length / 3) * 185px : Math.ceil(score-tiles.length / 3) * 185px; // 10 * 175 + 9 * 10 padding + ComboBox
-
-            for tile[i] in score-tiles : ScoreTile {
-                id: tile.index;
-                source: root.score-tiles[i].image;
-                available: true;
-                x: Math.mod(i, 3) * 610px; 
-                y: Math.floor(i / 3) * 185px;
-                removed(idx) => {
-                    root.removed(idx);
-                }
+        property <length> prev-height: Math.ceil(score-tiles.length / 3) * 185px;
+        if root.removed-tiles.length > 0 : Text {
+            x: 10px;
+            y: prev-height;
+            text: "Removed";
+            font-size: 28px;
+        }
+    
+        for tile[i] in removed-tiles : ScoreTile {
+            id: tile.index;
+            source: root.removed-tiles[i].image;
+            available: false;
+            x: Math.mod(i, 3) * 610px; 
+            y: prev-height + 50px + Math.floor(i / 3) * 185px;
+            added(idx) => {
+                root.export-enable = false;
+                root.added(idx);
             }
-
-            property <length> prev-height: Math.ceil(score-tiles.length / 3) * 185px;
-            if root.removed-tiles.length > 0 : Text {
-                x: 10px;
-                y: prev-height;
-                text: "Removed";
-                font-size: 28px;
-            }
-
-            for tile[i] in removed-tiles : ScoreTile {
-                id: tile.index;
-                source: root.removed-tiles[i].image;
-                available: false;
-                x: Math.mod(i, 3) * 610px; 
-                y: prev-height + 50px + Math.floor(i / 3) * 185px;
-                added(idx) => {
-                    root.added(idx);
-                }
+            copied(image) => {
+                root.copied(image);
+                root.text-content = "#\{self.id+1}卡片已复制到剪贴板";
             }
         }
     }
-}
 
-component ScoreTileExample inherits Image {
-    in property <image> image: @image-url("rating_example.png");
-    in property <int> id: 0;
-    in-out property <bool> available: true;
-
-    function clicked() {
-        available = !available;
-    }
-
-    width: 600px;
-    height: 175px;
-    source: root.image;
-    image-fit: contain;
-
-    if !available: Rectangle {
-        x: 575px;
-        y: 150px;
-        width: 25px;
-        height: 25px;
-        border-radius: 12.5px;
-        background: @radial-gradient(circle, #08b508 0%, #0b9804 100%);
-        Rectangle {
-            width: 12px;
-            height: 3px;
-            background: white;
+    ScrollView {
+        visible: root.is-real-time;
+        y: 60px;
+        width: 1840px;
+        viewport-width: 1820px; // 3 * 600 + 2 * 10 padding
+        viewport-height: Math.ceil(realtime-tiles.length / 3.0) * 185px + 50px;
+        Text {
+            x: 0px;
+            y: 10px;
+            text: root.test-content;
+            font-size: 16px;
+            height: 40px;
         }
-        Rectangle {
-            width: 3px;
-            height: 12px;
-            background: white;
-        }
-        TouchArea {
+        Button {
+            x: 300px;
+            y: 0px;
+            width: 100px;
+            height: 40px;
+            text: "清空";
             clicked => {
-                root.clicked();
+                root.realtime-tiles = [];
             }
         }
-    }
-
-    if available: Rectangle {
-        x: 575px;
-        y: 150px;
-        width: 25px;
-        height: 25px;
-        border-radius: 12.5px;
-        background: @radial-gradient(circle, #ff0000 0%, #bb0d0d 100%);
-        Rectangle {
-            width: 12px;
-            height: 3px;
-            background: white;
-        }
-        TouchArea {
-            clicked => {
-                root.clicked();
+        for tile[i] in realtime-tiles : ScoreTile {
+            id: tile.index;
+            source: root.realtime-tiles[i].image;
+            available: true;
+            x: Math.mod(i, 3) * 610px; 
+            y: Math.floor(i / 3) * 185px + 50px;
+            removed(idx) => {
+                root.export-enable = false;
+                root.removed(idx);
+            }
+            copied(image) => {
+                root.copied(image);
+                root.text-content = "#\{self.id+1}卡片已复制到剪贴板";
             }
         }
     }
 
 }
 
-export component HelpWindow inherits Window {
-    title: "使用说明";
-    width: 800px;
-    height: 600px;
-    icon: @image-url("../svg/icon.svg");
-    callback open-help-url();
-
-    Text {
-        x: 10px;
-        y: 10px;
-        font-size: 18px;
-        width: 780px;
-        height: 500px;
-        wrap: word-wrap;
-        text: "使用方式:\n打开程序后，程序会先从本地osu!目录读取6K游玩记录和谱面信息。加载完成后，通过左上角的下拉框选择玩家，或Recent 30即最近30次游玩记录。点击重置即可重新读取。";
-    }
-
-    Text {
-        x: 10px;
-        y: 90px;
-        font-size: 18px;
-        width: 780px;
-        wrap: word-wrap;
-        text: "之后程序会默认加载对应玩家最多30个最佳6K成绩。由于可能出现重复谱面或不想记录在B30列表中的谱面，可以点击卡片右下角红色减号按钮，将其移动到备选区，如果玩家游玩记录还有剩余就会在B30列表填充剩余的最好成绩。备选区的卡片右下角变成绿色加号按钮，点击即可替代B30列表最差的一个成绩。";
-    }
-
-    Text {
-        x: 10px;
-        y: 190px;
-        font-size: 18px;
-        width: 780px;
-        wrap: word-wrap;
-        text: "筛选完B30列表之后，点击导出按钮即可导出B30图片，导出完毕后程序界面会显示导出图片的路径。\n卡片信息如下：左侧是谱面背景，中间包括谱面的标题、音乐家、创作者、难度名等信息，中间下方是谱面的BPM、时长、难度和物件信息。右侧是游玩记录的排名、判定占比、Rating与定级、Rating Acc等。最下方是谱面的Hash（用于确认唯一性）和谱面ID。详情参见 https://github.com/Siflorite/mania-rating-gui";
-    }
-
-    Button {
-        y: 350px;
-        text: "访问详情页";
-        clicked => {
-           root.open-help-url();
-        }
-    }
-
-    ScoreTileExample {
-        x: 100px;
-        y: 400px;
-    }
-}
+export { HelpWindow }

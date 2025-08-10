@@ -6,8 +6,10 @@
         </radialGradient>
     </defs>
 
-    <circle cx="128" cy="128" r="116" fill="url(#gradient)" stroke="white" stroke-width="24" paint-order="stroke"/>
-    
+    <circle cx="128" cy="128" r="127" fill="none" stroke="#757575" stroke-width="1"/>
+    <circle cx="128" cy="128" r="115" fill="none" stroke="white" stroke-width="24" paint-order="stroke"/>
+    <circle cx="128" cy="128" r="116" fill="url(#gradient)" stroke="#757575" stroke-width="1" paint-order="stroke"/>
+
     <g transform="translate(33, 63)">
         <rect width="20" height="100" fill="#fe8dbf" rx="10" ry="10"/>
         <rect x="34" y="-25" width="20" height="100" fill="#fe8dbf" rx="10" ry="10"/>

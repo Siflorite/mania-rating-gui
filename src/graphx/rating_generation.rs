@@ -2,6 +2,7 @@ use chrono::Local;
 use handlebars::Handlebars;
 use resvg::{tiny_skia, usvg};
 use serde_json::json;
+use static_init::{dynamic};
 use std::{env, fs, io, path::{Path, PathBuf}, sync::Arc};
 
 use crate::db::RatingInfo;
@@ -14,6 +15,17 @@ const FONT_DIR_PATH: &str = "fonts";
 const CARD_HEIGHT: u32 = 350;
 const CARD_WIDTH: u32 = 1200;
 const PERIMETER: f64 = 628.3185307179586;
+
+const TITLE_MAX_LEN: usize = 28;
+const VERSION_MAX_LEN: usize = 55;
+
+#[dynamic]
+static FONT_ARC: Arc<usvg::fontdb::Database> = {
+    let mut fontdb = usvg::fontdb::Database::new();
+    fontdb.load_fonts_dir(FONT_DIR_PATH);
+    fontdb.load_system_fonts();
+    Arc::new(fontdb)
+};
 
 #[derive(serde::Serialize)]
 struct CardData {
@@ -85,8 +97,21 @@ fn generate_card_cata(i: usize, info: &RatingInfo) -> CardData {
 
     let title = beatmap_info.title_unicode.as_ref().unwrap_or(&beatmap_info.title);
     let title_ascii: &str = if &beatmap_info.title == title {""} else {&beatmap_info.title};
+    let title_len = utf8_slice::len(title);
+    let title = if title_len > TITLE_MAX_LEN { 
+        format!("...{}", utf8_slice::from(title, title_len + 3 - TITLE_MAX_LEN)) 
+    } else { 
+        title.clone() 
+    };
     let artist = beatmap_info.artist_unicode.as_ref().unwrap_or(&beatmap_info.artist);
     let artist_ascii: &str = if &beatmap_info.artist == artist {""} else {&beatmap_info.artist};
+    let version = &beatmap_info.version;
+    let version_len = utf8_slice::len(version);
+    let version = if version_len > VERSION_MAX_LEN { 
+        format!("{}...", utf8_slice::till(version, VERSION_MAX_LEN - 3))
+    } else { 
+        version.clone() 
+    };
     let bpm_str = format_bpm_str(beatmap_info.min_bpm, beatmap_info.max_bpm);
     let delta_len = bpm_str.len() as u32 * 12;
     let length_str = format_length_str(beatmap_info.length);
@@ -158,11 +183,11 @@ fn generate_card_cata(i: usize, info: &RatingInfo) -> CardData {
     CardData {
         bg_image: format!("{}", bg_path_string),
         title_ascii: title_ascii.into(),
-        title: title.into(),
+        title: title,
         artist_ascii: artist_ascii.into(),
         artist: artist.into(),
         creator: beatmap_info.creator.clone(),
-        version: beatmap_info.version.clone(),
+        version: version,
         column_count: beatmap_info.column_count,
         bpm: bpm_str,
         length: length_str,
@@ -217,7 +242,7 @@ fn generate_export_data(info_vec: Vec<ScoreTileBase64>) -> Vec<ExportCardData> {
 pub fn export_info(player_name: &str, info_vec: Vec<ScoreTileBase64>, average_rating: f64) -> io::Result<PathBuf> {
     let y_disclaimer = ((info_vec.len() as f64 / 3.0).ceil() as u32 + 1) * CARD_HEIGHT;
     let total_height = y_disclaimer + 150;
-    let player_name_f = if player_name == "Recent 30" { player_name.into() } else { format!("Player: {}", player_name) };
+    let player_name_f = if player_name == "[Recent 30]" { "Recent 30".into() } else { format!("Player: {}", player_name) };
     let average_rating_fill = format_diff_gradient(average_rating);
     let average_rating = format!("{:.02}", average_rating);
     let generated_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
@@ -236,12 +261,8 @@ pub fn export_info(player_name: &str, info_vec: Vec<ScoreTileBase64>, average_ra
         }))
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-    let mut fontdb = usvg::fontdb::Database::new();
-    fontdb.load_fonts_dir(FONT_DIR_PATH);
-    let font_arc = Arc::new(fontdb);
-
     let options = usvg::Options {
-        fontdb: font_arc,
+        fontdb: FONT_ARC.clone(),
         ..Default::default()
     };
 
@@ -262,15 +283,27 @@ pub fn export_info(player_name: &str, info_vec: Vec<ScoreTileBase64>, average_ra
 
     // 保存为PNG
     // let santized_name = sanitize_filename(&info_vec[0].score_info.player);
-    let pic_name = format!("{}.png", player_name);
+    let pic_name = format!("{}.jpg", player_name);
 
     if !save_pic_path.exists() {
         fs::create_dir_all(&save_pic_path)?;
     }
     let pic_path = save_pic_path.join(pic_name);
 
-    pixmap.save_png(&pic_path)
+    let image = image::RgbaImage::from_raw(
+        pixmap.width(), 
+        pixmap.height(), 
+        pixmap.take()).unwrap();
+    
+    // Rgba8不支持导出到Jpeg
+    let rgb_image = image::DynamicImage::ImageRgba8(image).to_rgb8();
+    rgb_image.save_with_format(&pic_path, image::ImageFormat::Jpeg)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+
+    // Too slow!
+    // let mut output_file = fs::File::create(&pic_path)?;
+    // let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut output_file, 80);
+    // encoder.encode_image(&rgb_image).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
     Ok(pic_path)
 }
@@ -279,15 +312,11 @@ pub fn generate_single_card_pixmap(i: usize, info: &RatingInfo) -> io::Result<ti
     let card_data = generate_card_cata(i, info);
     let mut reg = Handlebars::new();
     reg.register_template_file("template", INFO_CARD_TEMPLATE_PATH).expect("Failed to register template");
-    let svg_content = reg.render("template", &json!(card_data))
+    let svg_content: String = reg.render("template", &json!(card_data))
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-    let mut fontdb = usvg::fontdb::Database::new();
-    fontdb.load_fonts_dir(FONT_DIR_PATH);
-    let font_arc = Arc::new(fontdb);
-
     let options = usvg::Options {
-        fontdb: font_arc,
+        fontdb: FONT_ARC.clone(),
         ..Default::default()
     };
 

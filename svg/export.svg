@@ -6,7 +6,7 @@
         <text x="100" y="180" font-size="124">
             6K Rating 计算器
         </text>
-        <text x="100" y="280" font-size="56" xml:space="preserve">版本 0.1    Made by Siflorite    2025.07.25</text>
+        <text x="100" y="280" font-size="56" xml:space="preserve">版本 0.2    Made by Siflorite    2025.07.25</text>
         <text x="3550" y="100" text-anchor="end" font-size="72">
             {{player_name}}
         </text>

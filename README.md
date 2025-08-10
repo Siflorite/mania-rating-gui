@@ -57,7 +57,7 @@ $$\text{Params: } \text{diff}'=\max(\text{diffConst}-3,0)$$
 
 $$\begin{equation}\notag\text{rating}=f(\text{acc}, \text{diffConst})=\begin{cases}
 0,~&0\leq\text{acc}\leq 80;\\
-\frac{\text{acc}-80}{13},~&80<\text{acc}\leq93;\\
+\frac{\text{acc}-80}{13}\cdot\text{diff}',~&80<\text{acc}\leq93;\\
 \frac{(\text{diffConst}-\text{diff}')(\text{acc}-93)}{3}+\text{diff}',~&93<\text{acc}\leq96;\\
 \frac{3(\text{acc-96})}{6-(\text{acc-96})}+\text{diffConst},~&96<\text{acc}\leq98;\\
 \frac{8(\text{acc-98})}{9-2(\text{acc-98})}+\text{diffConst}+1.5,~&98<\text{acc}\leq99.5;\\
@@ -120,8 +120,8 @@ $$\text{ratingAcc}=\frac{310\times\text{numMarvelous}+300\times\text{numPerfect}
 
 # TODO List
 + ~~内置指南~~ (0.1.1已加入)
-+ 显示加载进度条
-+ 导出后自动打开文件夹/图片？
++ 显示加载进度条 (可能不好刷新ui)
++ ~~导出后自动打开文件夹/图片？~~ (0.2.0已加入打开图片)
 + 移除卡片可以选择是否自动填充
 + 联网谱面验证、本地回放验证
 + 更美观
@@ -132,3 +132,14 @@ $$\text{ratingAcc}=\frac{310\times\text{numMarvelous}+300\times\text{numPerfect}
 + 内置了使用说明，便于理解操作，以及打开github主页的按钮
 + 暂时使用skia作为渲染器，生成的exe文件大了约18MB，使文字渲染效果更好（原生太烂了）
 + 加入了程序图标和窗口图标
+
+## v0.2.0
++ 使用jpeg格式保存导出图像，显著减小图片大小
++ 导出图像后会自动使用`open`库打开
++ 为GUI中的卡片添加了复制按键，可以快速复制单个卡片到剪切板
++ 卡片中超过长度的标题和难度名会省略，只显示标题后面部分和难度前面部分
++ 添加了所有玩家的最佳成绩选项（"[All Players]"）
++ 修复了在新的卡片还没生成时点击导出按钮会导出旧卡片的问题，现在在加载过程中导出按钮会被禁用
++ 使用rosu-memory-lib库实现了测试中的实时导出功能：可以记录程序启动后游玩的成绩。
+目前无法读取osu!启动后程序启动前的成绩，且在结算界面启动程序会无法读取使用的mod，因此暂时取消在osu中打开回放时生成成绩图的功能。
++ 目前存在的bug：ui更新不及时，有时候无法读取ResultScreen的内容，在osu关闭后实时读取线程会自动结束。

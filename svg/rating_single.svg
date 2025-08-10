@@ -82,7 +82,7 @@
 
             <!-- 成绩与Rating -->
             <g transform="translate(550, 0)">
-                <text x="300" y="45" text-anchor="middle" stroke-width="2px" stroke="#000" paint-order="stroke" fill="#fff" font-family="Source Han Sans" font-size="40" font-weight="700">
+                <text x="340" y="45" text-anchor="end" stroke-width="2px" stroke="#000" paint-order="stroke" fill="#fff" font-family="Source Han Sans" font-size="40" font-weight="700">
                     #{{rating_index}}
                 </text>
                 <!-- 圆环 -->
