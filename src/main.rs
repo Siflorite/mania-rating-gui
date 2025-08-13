@@ -10,7 +10,7 @@ use crate::ui::callbacks::{
 };
 use crate::ui::{ScoreTileBase64, ThreadManager};
 use anyhow::Result;
-use slint::{ModelRc, SharedString, VecModel};
+use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::collections::HashMap;
 use std::sync::{Arc, LazyLock, Mutex};
 
@@ -22,21 +22,15 @@ static SCORES_DATA: LazyScoreMap = LazyLock::new(|| Arc::new(Mutex::new(HashMap:
 async fn main() -> Result<()> {
     let ui = MainWindow::new()?;
     let osu_path = get_osu_install_path();
+    // let osu_path: Option<std::path::PathBuf> = None; // For testing
     let osu_exe_dir = match osu_path {
         Some(p) => p.to_string_lossy().into_owned(),
-        None => select_osu_folder(false),
+        None => select_osu_folder().ok_or(anyhow::Error::msg("Cannot find osu directory"))?,
     };
     ui.set_osu_dir(SharedString::from(&osu_exe_dir));
-    initialize(&osu_exe_dir, &ui)?;
+    initialize(osu_exe_dir.clone(), ui.as_weak()).await?;
 
     let ratings = SCORES_DATA.clone();
-    // Initialize the model with Recent 30
-    update_player_b30(
-        SharedString::from("[Recent 30]"),
-        ratings.clone(),
-        ui.as_weak(),
-    )
-    .await;
 
     let ui_handle = ui.as_weak();
     let rating_selection = ratings.clone();
@@ -150,11 +144,11 @@ async fn main() -> Result<()> {
 
     let ui_s = ui.as_weak();
     ui.on_select_osu_dir(move || {
-        let new_dir = select_osu_folder(false);
+        let new_dir = select_osu_folder().unwrap_or_default();
         if !new_dir.is_empty() && new_dir != osu_exe_dir {
-            let ui = ui_s.unwrap();
-            ui.set_osu_dir(SharedString::from(&new_dir));
-            initialize(&new_dir, &ui).unwrap();
+            ui_s.unwrap().set_osu_dir(SharedString::from(&new_dir));
+            let ui_s = ui_s.clone();
+            tokio::spawn(initialize(new_dir, ui_s));
         }
     });
 
@@ -162,24 +156,31 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn initialize(osu_exe_dir: &str, ui: &MainWindow) -> Result<()> {
-    let data = prepare_ratings(osu_exe_dir)?;
-    let mut scores = SCORES_DATA.lock().unwrap();
-    scores.clear();
-    for (k, v) in data {
-        scores.insert(k, v);
-    }
-    // let players_list = data.keys().map(SharedString::from).collect::<Vec<_>>();
-    let mut players_list = scores
-        .keys()
-        .filter(|name| *name != "[All Players]" && *name != "[Recent 30]")
-        .map(SharedString::from)
-        .collect::<Vec<_>>();
+pub async fn initialize(osu_exe_dir: String, ui: Weak<MainWindow>) -> Result<()> {
+    let data = prepare_ratings(&osu_exe_dir)?;
+    let mut players_list = {
+        let mut scores = SCORES_DATA.lock().unwrap();
+        scores.clear();
+        for (k, v) in data {
+            scores.insert(k, v);
+        }
+        // let players_list = data.keys().map(SharedString::from).collect::<Vec<_>>();
+        scores
+            .keys()
+            .filter(|name| *name != "[All Players]" && *name != "[Recent 30]")
+            .map(SharedString::from)
+            .collect::<Vec<_>>()
+    };
     players_list.sort();
     players_list.extend_from_slice(&[
         SharedString::from("[All Players]"),
         SharedString::from("[Recent 30]"),
     ]);
-    ui.set_player_names(ModelRc::new(VecModel::from(players_list)));
+    ui.upgrade_in_event_loop(|ui| {
+        ui.set_player_names(ModelRc::new(VecModel::from(players_list)));
+    })
+    .unwrap();
+    // Initialize the model with Recent 30
+    update_player_b30(SharedString::from("[Recent 30]"), SCORES_DATA.clone(), ui).await;
     Ok(())
 }

@@ -254,31 +254,27 @@ pub async fn copy_image(width: usize, height: usize, bytes: Vec<u8>) {
     clipboard.set_image(image_data).unwrap();
 }
 
-pub fn select_osu_folder(has_available_path: bool) -> String {
-    loop {
-        let path = DialogBuilder::file()
-            .set_location("~/Desktop")
-            .set_title("选择osu!文件夹")
-            .open_single_dir()
-            .show()
-            .unwrap();
-        println!("{path:?}");
-        if let Some(path) = path {
-            let scores_db_path = path.join("scores.db");
-            let osu_db_path = path.join("osu!.db");
-            if scores_db_path.exists() && osu_db_path.exists() {
-                return path.to_string_lossy().into_owned();
-            }
-        }
-        DialogBuilder::message()
-            .set_level(MessageLevel::Error)
-            .set_title("Cannot find db")
-            .set_text("该路径下没有osu!.db和scores.db文件!")
-            .confirm()
-            .show()
-            .unwrap();
-        if has_available_path {
-            return String::new();
+pub fn select_osu_folder() -> Option<String> {
+    let path = DialogBuilder::file()
+        .set_location("~/Desktop")
+        .set_title("选择osu!文件夹")
+        .open_single_dir()
+        .show()
+        .unwrap();
+    println!("{path:?}");
+    if let Some(path) = path {
+        let scores_db_path = path.join("scores.db");
+        let osu_db_path = path.join("osu!.db");
+        if scores_db_path.exists() && osu_db_path.exists() {
+            return Some(path.to_string_lossy().into_owned());
         }
     }
+    DialogBuilder::message()
+        .set_level(MessageLevel::Error)
+        .set_title("Cannot find db")
+        .set_text("该路径下没有osu!.db和scores.db文件！")
+        .confirm()
+        .show()
+        .unwrap();
+    None
 }
