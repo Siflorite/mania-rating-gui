@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 // use chrono::Local;
 // use colored::Colorize;
 // use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
-use osu_db::{self, Listing, Mod, ModSet, ScoreList, Replay};
+use osu_db::{self, Listing, Mod, ModSet, Replay, ScoreList};
 use rayon::prelude::*;
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
@@ -19,17 +19,23 @@ use super::RatingMapInfo;
 pub fn extract_plays(osu_exe_dir: &str) -> io::Result<HashMap<String, BeatmapStoreInfo>> {
     // 读取谱面数据库
     let osu_path = if osu_exe_dir.is_empty() {
-        get_osu_install_path().ok_or(io::Error::new(io::ErrorKind::InvalidData, "cannot find osu!.exe"))?
+        get_osu_install_path().ok_or(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "cannot find osu!.exe",
+        ))?
     } else {
         PathBuf::from(osu_exe_dir)
     };
-    println!("osu!.exe所在文件夹路径：{:?}", osu_path);
-    let listing = Listing::from_file(get_db_path(osu_exe_dir, "osu!.db")
-        .ok_or(io::Error::new(io::ErrorKind::InvalidData, "cannot find osu!.exe"))?)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-    let scores = ScoreList::from_file(get_db_path(osu_exe_dir, "scores.db")
-        .ok_or(io::Error::new(io::ErrorKind::InvalidData, "cannot find osu!.exe"))?)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+    println!("osu!.exe所在文件夹路径：{osu_path:?}");
+    let listing = Listing::from_file(get_db_path(osu_exe_dir, "osu!.db").ok_or(io::Error::new(
+        io::ErrorKind::InvalidData,
+        "cannot find osu!.exe",
+    ))?)
+    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+    let scores = ScoreList::from_file(get_db_path(osu_exe_dir, "scores.db").ok_or(
+        io::Error::new(io::ErrorKind::InvalidData, "cannot find osu!.exe"),
+    )?)
+    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
     // 构建哈希映射存储谱面信息
     let mut beatmap_store: HashMap<String, BeatmapStoreInfo> = HashMap::new();
 
@@ -120,7 +126,7 @@ pub fn extract_plays(osu_exe_dir: &str) -> io::Result<HashMap<String, BeatmapSto
                     ];
                     info.plays.push(PlayRecord {
                         player: rep.player_name.unwrap(),
-                        mods: rep.mods.clone(),
+                        mods: rep.mods,
                         judgement_num: judgement_vec,
                         accuracy,
                         accuracy_rating,
@@ -137,9 +143,15 @@ pub fn extract_plays(osu_exe_dir: &str) -> io::Result<HashMap<String, BeatmapSto
 /// 从 osu目录/Data/r 目录下面找到比scores.db中更新的但还未写入的回放，计入信息中
 /// 流程：遍历回放目录的文件名，筛选时间戳大于scores.db中最新时间戳的osr文件，记录其中信息
 #[allow(dead_code)]
-pub fn extract_unstored_replays(osu_exe_dir: &str, timestamp: DateTime<Utc>) -> io::Result<Vec<PlayRecord>> {
+pub fn extract_unstored_replays(
+    osu_exe_dir: &str,
+    timestamp: DateTime<Utc>,
+) -> io::Result<Vec<PlayRecord>> {
     let osu_path = if osu_exe_dir.is_empty() {
-        get_osu_install_path().ok_or(io::Error::new(io::ErrorKind::InvalidData, "cannot find osu!.exe"))?
+        get_osu_install_path().ok_or(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "cannot find osu!.exe",
+        ))?
     } else {
         PathBuf::from(osu_exe_dir)
     };
@@ -149,12 +161,19 @@ pub fn extract_unstored_replays(osu_exe_dir: &str, timestamp: DateTime<Utc>) -> 
     let replay_dir = osu_path.join("Data").join("r");
     let record_vec: Vec<PlayRecord> = WalkDir::new(&replay_dir)
         .into_iter()
-        .filter_map(|entry| entry.ok()) 
+        .filter_map(|entry| entry.ok())
         .filter(|entry| {
             let path = entry.path();
             let (file_stem, ext) = (path.file_stem(), path.extension().unwrap().to_str());
-            let timestamp_osr = file_stem.unwrap().to_str().unwrap_or("")
-                .split("-").last().unwrap_or("").parse::<u64>().unwrap_or(0);
+            let timestamp_osr = file_stem
+                .unwrap()
+                .to_str()
+                .unwrap_or("")
+                .split("-")
+                .last()
+                .unwrap_or("")
+                .parse::<u64>()
+                .unwrap_or(0);
             timestamp_osr > timestamp && ext == Some("osr")
         })
         .filter_map(|entry| {
@@ -211,20 +230,21 @@ pub fn extract_unstored_replays(osu_exe_dir: &str, timestamp: DateTime<Utc>) -> 
                         rep.count_50 as u32,
                         rep.count_miss as u32,
                     ],
-                    accuracy: accuracy,
-                    accuracy_rating: accuracy_rating,
+                    accuracy,
+                    accuracy_rating,
                     timestamp: rep.timestamp,
                 })
             } else {
                 None
             }
-        }).collect();
+        })
+        .collect();
     Ok(record_vec)
 }
 
 #[inline]
 fn calc_rating(diff_const: f64, acc: f64) -> f64 {
-    if acc < 0.0 || acc > 100.0 {
+    if !(0.0..=100.0).contains(&acc) {
         return 0.0;
     }
 
@@ -266,7 +286,8 @@ pub fn extract_ratings(osu_exe_dir: &str) -> io::Result<(Vec<RatingInfo>, Vec<Ra
     let beatmap_store: Vec<(String, BeatmapStoreInfo)> = extract_plays(osu_exe_dir)?
         .into_par_iter()
         .filter_map(|(hash, mut info)| {
-            info.plays.retain(|p| !p.mods.contains(Mod::Random));
+            info.plays
+                .retain(|p| !p.mods.contains(Mod::Random) && !p.mods.contains(Mod::Easy));
             if info.plays.is_empty() {
                 return None;
             }
@@ -280,7 +301,12 @@ pub fn extract_ratings(osu_exe_dir: &str) -> io::Result<(Vec<RatingInfo>, Vec<Ra
         // .with_style(style)
         .filter_map(|(hash, info)| {
             // println!("{:?}", info.path);
-            let osu_data = OsuDataV128::from_file(&info.path.to_str()?)
+            // 可以认为：HR mod使判定区间除以1.4, EZ mod使判定区间乘以1.4
+            // 那么需要重新拓扑OD到判定区间的函数，得到新判定区间对应的OD，以HR为例：
+            // window = 64.5 - (original_od * 3.0).ceil()
+            // new_window = window / 1.4
+            // new_od = (64.5 - new_window) / 3.0
+            let osu_data = OsuDataV128::from_file(info.path.to_str()?)
                 .ok()?
                 .to_legacy();
             let beatmap_info = osu_data.to_beatmap_info(true);
@@ -316,6 +342,35 @@ pub fn extract_ratings(osu_exe_dir: &str) -> io::Result<(Vec<RatingInfo>, Vec<Ra
                 .plays
                 .iter()
                 .map(|play| {
+                    let srs = if play.mods.contains(Mod::HardRock) || play.mods.contains(Mod::Easy)
+                    {
+                        let mut new_data = osu_data.clone();
+                        let original_od = new_data.misc.od;
+                        let window = 64.5 - (original_od * 3.0).ceil();
+                        let new_window = if play.mods.contains(Mod::HardRock) {
+                            window / 1.4
+                        } else {
+                            window * 1.4
+                        };
+                        let new_od = (64.5 - new_window) / 3.0;
+                        new_data.misc.od = new_od;
+                        let (sr_ht, sr_dt) = (
+                            if mod_flag.0 {
+                                calculate_from_data(&osu_data, 0.75).unwrap_or(0.0)
+                            } else {
+                                0.0
+                            },
+                            if mod_flag.2 {
+                                calculate_from_data(&osu_data, 1.5).unwrap_or(0.0)
+                            } else {
+                                0.0
+                            },
+                        );
+                        let sr = calculate_from_data(&new_data, 1.0).unwrap_or(0.0);
+                        (sr_ht, sr, sr_dt)
+                    } else {
+                        srs
+                    };
                     let (diff_const, rating) =
                         calc_mod_rating(play.mods, srs, play.accuracy_rating);
                     RatingInfo {
@@ -359,15 +414,15 @@ pub fn prepare_ratings(osu_exe_dir: &str) -> io::Result<HashMap<String, Vec<Rati
 
     // Recent Scores
     all_ratings.sort_unstable_by(|a, b| {
-        b.score_info.timestamp
+        b.score_info
+            .timestamp
             .partial_cmp(&a.score_info.timestamp)
             .unwrap_or(Ordering::Equal)
     });
     let all_ratings_clone = all_ratings.clone();
 
-    best_ratings.sort_unstable_by(|a, b| {
-        b.rating.partial_cmp(&a.rating).unwrap_or(Ordering::Equal)
-    });
+    best_ratings
+        .sort_unstable_by(|a, b| b.rating.partial_cmp(&a.rating).unwrap_or(Ordering::Equal));
 
     // 玩家列表
     let players_vec = {
@@ -382,35 +437,33 @@ pub fn prepare_ratings(osu_exe_dir: &str) -> io::Result<HashMap<String, Vec<Rati
     let mut player_scores = players_vec
         .into_iter()
         .map(|player| {
-            let player_ratings_origin = all_ratings.extract_if(.., |rating| {
-                rating.score_info.player == player
-            }).collect::<Vec<_>>();
-            
+            let player_ratings_origin = all_ratings
+                .extract_if(.., |rating| rating.score_info.player == player)
+                .collect::<Vec<_>>();
+
             let mut hash_ratings: HashMap<String, RatingInfo> = HashMap::new();
             player_ratings_origin.iter().for_each(|info| {
-                let entry = hash_ratings.entry(info.map_info.hash.clone())
+                let entry = hash_ratings
+                    .entry(info.map_info.hash.clone())
                     .or_insert(info.clone());
                 if info.rating > entry.rating {
                     *entry = info.clone();
                 }
             });
 
-            let mut player_ratings_final = hash_ratings.into_iter()
-                .map(|(_, info)| info)
-                .collect::<Vec<_>>();
+            let mut player_ratings_final = hash_ratings.into_values().collect::<Vec<_>>();
             player_ratings_final.sort_unstable_by(|a, b| {
                 b.rating.partial_cmp(&a.rating).unwrap_or(Ordering::Equal)
             });
 
             let final_name = match player.as_str() {
-                "Recent 30" | "All Players" => format!("{} (Player)", player),
+                "Recent 30" | "All Players" => format!("{player} (Player)"),
                 _ => player,
             };
 
             (final_name, player_ratings_final)
-
-        }).collect::<HashMap<_, _>>();
-
+        })
+        .collect::<HashMap<_, _>>();
 
     player_scores.insert("[Recent 30]".into(), all_ratings_clone);
     player_scores.insert("[All Players]".into(), best_ratings);

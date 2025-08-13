@@ -135,6 +135,9 @@
                             stroke-dashoffset="-{{perf_offset}}"
                             stroke-dasharray="{{perf_ratio}}, 628.3185307179586"
                         />
+                        <!-- r=10, R=110, arcsin(r/(R-r))=arcsin(1/10)=0.100167(grad) -->
+                        <!-- 0.100167*100*2=20.0334 -->
+                        <!--因此如果marv的起始位置超过20.04，就可以重新绘制了 -->
                         <circle
                             id="marvellous" r="100"
                             stroke="#75d7fc"
@@ -142,6 +145,14 @@
                             stroke-dasharray="{{marv_ratio}}, 628.3185307179586"
                             mask="url(#marvellous-mask)"
                         />
+                        {{#if marv_extra}}
+                        <circle
+                            id="marvellous" r="100"
+                            stroke="#75d7fc"
+                            stroke-dashoffset="-20.04"
+                            stroke-dasharray="{{marv_extra}}, 628.3185307179586"
+                        />
+                        {{/if}}
                     </g>
                     <circle
                         id="fill" cx="0" cy="0" r="90"
@@ -175,6 +186,16 @@
                     <tspan fill="#00e721" x="160" y="270" text-anchor="middle">{{acc_r}}%</tspan>
                     <tspan fill="white" x="160" y="285" text-anchor="middle">({{acc}}%)</tspan>
                 </text>
+                {{#if diff_mod_color}}
+                    <rect
+                        x="210" y="225"
+                        width="40" height="40"
+                        fill="{{diff_mod_color}}"
+                        fill-opacity="0.5"
+                        rx="10" ry="10"
+                    />
+                    <text x="230" y="253" fill="white" font-family="Source Han Sans" font-size="20" font-weight="500" text-anchor="middle">{{diff_mod_text}}</text>
+                {{/if}}
                 {{#if speed_mod_color}}
                     <rect
                         x="255" y="225"

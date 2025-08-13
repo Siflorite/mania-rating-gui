@@ -1,6 +1,6 @@
 [package]
 name = "mania-rating-gui"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 
 [dependencies]
@@ -8,14 +8,16 @@ anyhow = "1"
 arboard = "3.6.0"
 chrono = "*"
 mania-converter = { git = "https://github.com/Siflorite/mania-converter-rust.git" }
+native-dialog = "0.9.0"
 open = "5.3.2"
 osu-db = { git = "https://github.com/Siflorite/osu-db.git" }
 rayon = "1.10"
-rosu-memory-lib = { git = "https://github.com/Siflorite/rosu-memory-lib.git", features = ["parallel-read"] }
-slint = { version = "1.12.1", features = ["renderer-skia-opengl"] }
+rosu-mem = "2.0.0"
+rosu-memory-lib = { version = "1.2.1", features = ["parallel-read"] }
+slint = { version = "1.12.1", features = ["renderer-skia"] }
 tokio = { version = "1", features = ["full"] }
 walkdir = "2.5.0"
-winres = "0.1.12"
+winresource = "0.1"
 winreg = "0.55"
 # For picture generation
 base64 = "0.22.1"
@@ -24,10 +26,9 @@ image = "0.25.6"
 resvg = "0.45"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
-static_init = "1.0.4"
 utf8_slice = "1.0.0"
 tokio-util = "0.7.16"
 
 [build-dependencies]
 slint-build = "1.12.1"
-winres = "0.1.12"
+winresource = "0.1"

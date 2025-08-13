@@ -1,2 +1,2 @@
 mod rating_generation;
-pub use rating_generation::{generate_single_card_pixmap, export_info};
+pub use rating_generation::{export_info, generate_single_card_pixmap};

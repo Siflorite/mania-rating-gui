@@ -1,4 +1,4 @@
-import { ComboBox, VerticalBox, ScrollView, HorizontalBox, Button, Switch } from "std-widgets.slint";
+import { ComboBox, VerticalBox, ScrollView, HorizontalBox, Button, Switch, LineEdit } from "std-widgets.slint";
 import { ScoreTile } from "score_tiles.slint";
 import { HelpWindow } from "help_window.slint";
 
@@ -22,6 +22,7 @@ export component MainWindow inherits Window {
     in-out property <string> current-player-name: "[Recent 30]";
     in-out property <string> text-content: "";
     in-out property <string> test-content: "This is a test message.";
+    in-out property <string> osu-dir: "";
 
     in-out property <bool> export-enable: true;
     in-out property <bool> is-real-time: false;
@@ -32,9 +33,10 @@ export component MainWindow inherits Window {
     callback added(int);
     callback removed(int);
     callback copied(image);
+    callback toggle-realtime(bool);
     callback show-help-window();
-
-    callback on-close-requested();
+    callback refresh();
+    callback select-osu-dir();
 
     HorizontalLayout {
         x: 10px;
@@ -83,7 +85,7 @@ export component MainWindow inherits Window {
             checked <=> root.is-real-time;
             text: "实时模式 (测试版)";
             toggled => {
-
+                toggle-realtime(root.is-real-time);
             }
         }
 
@@ -98,9 +100,26 @@ export component MainWindow inherits Window {
 
         Text {
             y: 8px;
+            width: 400px;
             height: 40px;
             font-size: 18px;
             text: root.text-content;
+        }
+
+        LineEdit {
+            read-only: true;
+            width: 250px;
+            height: 40px;
+            text: root.osu-dir;
+        }
+
+        Button {
+            width: 120px;
+            height: 40px;
+            text: "选择osu!文件夹";
+            clicked => {
+                select-osu-dir();
+            }
         }
         
     }
@@ -154,42 +173,56 @@ export component MainWindow inherits Window {
         }
     }
 
-    ScrollView {
-        visible: root.is-real-time;
+    VerticalLayout {
         y: 60px;
-        width: 1840px;
-        viewport-width: 1820px; // 3 * 600 + 2 * 10 padding
-        viewport-height: Math.ceil(realtime-tiles.length / 3.0) * 185px + 50px;
-        Text {
-            x: 0px;
-            y: 10px;
-            text: root.test-content;
-            font-size: 16px;
-            height: 40px;
-        }
-        Button {
-            x: 300px;
-            y: 0px;
-            width: 100px;
-            height: 40px;
-            text: "清空";
-            clicked => {
-                root.realtime-tiles = [];
+        spacing: 10px;
+        visible: root.is-real-time;
+        HorizontalLayout {
+            x: 10px;
+            spacing: 10px;
+            Text {
+                y: 10px;
+                text: root.test-content;
+                font-size: 16px;
+                width: 300px;
+                height: 40px;
+            }
+            Button {
+                width: 100px;
+                height: 40px;
+                text: "清空";
+                clicked => {
+                    root.realtime-tiles = [];
+                }
+            }
+            Button {
+                width: 100px;
+                height: 40px;
+                text: "刷新";
+                clicked => {
+                    root.refresh();
+                }
             }
         }
-        for tile[i] in realtime-tiles : ScoreTile {
-            id: tile.index;
-            source: root.realtime-tiles[i].image;
-            available: true;
-            x: Math.mod(i, 3) * 610px; 
-            y: Math.floor(i / 3) * 185px + 50px;
-            removed(idx) => {
-                root.export-enable = false;
-                root.removed(idx);
-            }
-            copied(image) => {
-                root.copied(image);
-                root.text-content = "#\{self.id+1}卡片已复制到剪贴板";
+        ScrollView {
+            x: 5px;
+            width: 1840px;
+            height: 690px;
+            viewport-width: 1820px; // 3 * 600 + 2 * 10 padding
+            viewport-height: Math.ceil(realtime-tiles.length / 3.0) * 185px;
+            for tile[i] in realtime-tiles : ScoreTile {
+                id: tile.index;
+                source: root.realtime-tiles[i].image;
+                available: true;
+                x: Math.mod(i, 3) * 610px; 
+                y: Math.floor(i / 3) * 185px;
+                removed(idx) => {
+                    
+                }
+                copied(image) => {
+                    root.copied(image);
+                    root.text-content = "#\{self.id+1}卡片已复制到剪贴板";
+                }
             }
         }
     }

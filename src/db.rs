@@ -1,8 +1,9 @@
 mod misc;
 mod ratings;
 
-pub(crate) use misc::{get_db_path, get_osu_install_path, get_replay_timestamp};
-pub use ratings::{prepare_ratings, calc_mod_rating};
+pub use misc::get_osu_install_path;
+pub(crate) use misc::{get_db_path, get_replay_timestamp};
+pub use ratings::{calc_mod_rating, prepare_ratings};
 
 use chrono::{DateTime, Utc};
 use mania_converter::BeatMapInfo;
@@ -28,13 +29,13 @@ pub struct PlayRecord {
 
 impl Default for PlayRecord {
     fn default() -> Self {
-        PlayRecord { 
-            player: String::new(), 
-            mods: ModSet(0), 
-            judgement_num: [0,0,0,0,0,0], 
-            accuracy: 0.0, 
-            accuracy_rating: 0.0, 
-            timestamp: DateTime::default() 
+        PlayRecord {
+            player: String::new(),
+            mods: ModSet(0),
+            judgement_num: [0, 0, 0, 0, 0, 0],
+            accuracy: 0.0,
+            accuracy_rating: 0.0,
+            timestamp: DateTime::default(),
         }
     }
 }
