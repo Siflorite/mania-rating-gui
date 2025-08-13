@@ -273,7 +273,7 @@ pub fn select_osu_folder() -> Option<String> {
         .set_level(MessageLevel::Error)
         .set_title("Cannot find db")
         .set_text("该路径下没有osu!.db和scores.db文件！")
-        .confirm()
+        .alert()
         .show()
         .unwrap();
     None

@@ -149,6 +149,8 @@ async fn main() -> Result<()> {
             ui_s.unwrap().set_osu_dir(SharedString::from(&new_dir));
             let ui_s = ui_s.clone();
             tokio::spawn(initialize(new_dir, ui_s));
+        } else {
+            ui_s.unwrap().set_folder_select_enable(true);
         }
     });
 
@@ -178,6 +180,7 @@ pub async fn initialize(osu_exe_dir: String, ui: Weak<MainWindow>) -> Result<()>
     ]);
     ui.upgrade_in_event_loop(|ui| {
         ui.set_player_names(ModelRc::new(VecModel::from(players_list)));
+        ui.set_folder_select_enable(true);
     })
     .unwrap();
     // Initialize the model with Recent 30

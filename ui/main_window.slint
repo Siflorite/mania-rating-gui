@@ -25,6 +25,7 @@ export component MainWindow inherits Window {
     in-out property <string> osu-dir: "";
 
     in-out property <bool> export-enable: true;
+    in-out property <bool> folder-select-enable: true;
     in-out property <bool> is-real-time: false;
 
     callback selection_changed(string);
@@ -116,8 +117,10 @@ export component MainWindow inherits Window {
         Button {
             width: 120px;
             height: 40px;
+            enabled: root.folder-select-enable;
             text: "选择osu!文件夹";
             clicked => {
+                root.folder-select-enable = false;
                 select-osu-dir();
             }
         }
