@@ -162,10 +162,7 @@ pub async fn initialize(osu_exe_dir: String, ui: Weak<MainWindow>) -> Result<()>
     let data = prepare_ratings(&osu_exe_dir)?;
     let mut players_list = {
         let mut scores = SCORES_DATA.lock().unwrap();
-        scores.clear();
-        for (k, v) in data {
-            scores.insert(k, v);
-        }
+        *scores = data;
         // let players_list = data.keys().map(SharedString::from).collect::<Vec<_>>();
         scores
             .keys()
